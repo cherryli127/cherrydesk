@@ -7,7 +7,8 @@
       "watch": "tsc -w",
       "electron": "electron .",
       "dev": "concurrently \"npm:watch\" \"npm:electron\"",
-      "start": "npm run build && electron ."
+      "start": "npm run build && electron .",
+      "postinstall": "node scripts/postinstall-electron.js"
     },
     "devDependencies": {
       "@types/electron": "^1.6.10",
