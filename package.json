@@ -1,0 +1,19 @@
+{
+    "name": "cherrydesk",
+    "version": "0.1.0",
+    "main": "dist/main/main.js",
+    "scripts": {
+      "build": "tsc && cp src/renderer/index.html dist/renderer/index.html",
+      "watch": "tsc -w",
+      "electron": "electron .",
+      "dev": "concurrently \"npm:watch\" \"npm:electron\"",
+      "start": "npm run build && electron ."
+    },
+    "devDependencies": {
+      "@types/electron": "^1.6.10",
+      "@types/node": "^22.7.4",
+      "concurrently": "^9.1.0",
+      "electron": "^32.2.0",
+      "typescript": "^5.6.3"
+    }
+  }
