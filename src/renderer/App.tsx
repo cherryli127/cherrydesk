@@ -31,6 +31,11 @@ function defaultFooterText(folders: FolderItem[]): string {
   return 'Ready to index selected folders.';
 }
 
+const countFiles = (node: FileNode): number =>
+  node.type === 'file'
+    ? 1
+    : (node.children ?? []).reduce((acc, child) => acc + countFiles(child), 0);
+
 export default function App() {
   const [folders, setFolders] = useState<FolderItem[]>([]);
   const [statusInfo, setStatusInfo] = useState<StatusInfo | null>(null);
@@ -66,6 +71,12 @@ export default function App() {
   );
 
   const footerText = customFooterText ?? defaultFooterText(folders);
+
+  const pendingSummary = useMemo(() => {
+    if (!snapshotTree || !workingTree) return null;
+    const files = workingTree.reduce((acc, root) => acc + countFiles(root), 0);
+    return { roots: workingTree.length, files };
+  }, [snapshotTree, workingTree]);
 
   const updateFolders = (
     updater: (current: FolderItem[]) => FolderItem[],
@@ -291,39 +302,41 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#121212] text-[#f5f5f5] p-6">
-      <div className="mx-auto w-full max-w-4xl rounded-2xl bg-[#1e1e1e] p-6 shadow-2xl shadow-black/40">
-        <header className="mb-6 flex flex-col gap-2">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-base font-semibold">Connect Sources</span>
-              <span className="rounded-full border border-[#3f8cff] px-2 text-[11px] text-[#9ec4ff]">
-                100% local
-              </span>
+    <div className="min-h-screen bg-[#0f1219] text-[#f5f5f5] p-8">
+      <div className="mx-auto w-full max-w-5xl rounded-3xl bg-[#131722] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.45)] border border-[#1c2130]">
+        <header className="mb-8 flex flex-col gap-2">
+          <p className="text-[11px] uppercase tracking-[0.2em] text-[#6a7b9f]">Workspace</p>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold text-white">CherryDesk Organizer</h1>
+              <p className="text-sm text-[#95a4c0]">
+                Capture a point-zero snapshot, preview smart grouping strategies, and apply with confidence.
+              </p>
             </div>
-            <p className="text-xs text-[#a0a0a0]">
-              Connect your local folders and let CherryDesk index them.
-            </p>
+            <span className="rounded-full border border-[#28406c] bg-[#162039] px-3 py-1 text-[11px] text-[#9ec4ff] inline-flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-[#35d59d]" />
+              100% local
+            </span>
           </div>
         </header>
 
-        <section className="rounded-xl border border-[#2a2a2a] bg-[#181818] p-4">
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2 text-sm">
-              <div className="h-4 w-5 rounded-[4px] bg-gradient-to-br from-[#f6c453] to-[#f29f3f]">
-                <div className="ml-1 mt-[-3px] h-1 w-2 rounded-t bg-[#f9d58c]" />
+        <section className="rounded-2xl border border-[#1e2536] bg-[#0f1420] p-5 shadow-inner shadow-black/30">
+          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2 text-sm text-[#e7e8ef]">
+              <div className="h-5 w-6 rounded-[6px] bg-gradient-to-br from-[#f6c453] to-[#f29f3f] flex items-center justify-center text-[10px] text-[#2a1800] font-semibold">
+                FS
               </div>
-              <span className="font-medium">Local Folder</span>
+              <span className="font-semibold tracking-wide">Local Sources</span>
             </div>
             <div className="flex gap-2">
               <button
-                className="rounded-full border border-[#3a3a3a] bg-[#222222] px-4 py-1 text-xs text-white transition hover:bg-[#2a2a2a]"
+                className="rounded-full border border-[#2d3c55] bg-[#11182a] px-4 py-2 text-xs text-white transition hover:border-[#3f8cff]"
                 onClick={handleConnectFolder}
               >
                 Connect folder
               </button>
               <button
-                className="rounded-full border border-[#3a3a3a] bg-[#222222] px-4 py-1 text-xs text-white opacity-40"
+                className="rounded-full border border-[#2d3c55] bg-[#11182a] px-4 py-2 text-xs text-white opacity-40 cursor-not-allowed"
                 disabled
               >
                 Connect file
@@ -331,37 +344,29 @@ export default function App() {
             </div>
           </div>
 
-          <div className="mb-2 flex flex-col gap-2 text-[11px] text-[#a0a0a0] sm:flex-row sm:items-center sm:justify-between">
+          <div className="mb-2 flex flex-col gap-2 text-[11px] text-[#8ea0c0] sm:flex-row sm:items-center sm:justify-between">
             <span>Folders</span>
             <div className="flex items-center gap-3">
-              <span>{selectedCount} selected</span>
-              <button
-                className="text-[#c8d4ff] hover:underline"
-                type="button"
-                onClick={handleSelectAll}
-              >
+              <span className="text-[#b8c6e3]">{selectedCount} selected</span>
+              <button className="text-[#8fb9ff] hover:underline" type="button" onClick={handleSelectAll}>
                 Select all
               </button>
-              <button
-                className="text-[#c8d4ff] hover:underline"
-                type="button"
-                onClick={handleClear}
-              >
+              <button className="text-[#8fb9ff] hover:underline" type="button" onClick={handleClear}>
                 Clear
               </button>
             </div>
           </div>
 
-          <div className="max-h-64 overflow-auto rounded-xl border border-[#262626] bg-[#151515]">
+          <div className="max-h-64 overflow-auto rounded-2xl border border-[#171d2c] bg-[#0b111c]">
             {folders.length === 0 ? (
-              <div className="px-4 py-5 text-sm text-[#7c7c7c]">
+              <div className="px-6 py-8 text-sm text-center text-[#6b7a99]">
                 No folders connected yet. Click “Connect folder” to get started.
               </div>
             ) : (
               folders.map((folder, index) => (
                 <div
                   key={folder.path}
-                  className="flex items-center gap-3 border-b border-[#262626] px-4 py-2 text-sm last:border-b-0"
+                  className="flex items-center gap-3 border-b border-[#161b28] px-5 py-3 text-sm last:border-b-0"
                 >
                   <input
                     type="checkbox"
@@ -369,12 +374,10 @@ export default function App() {
                     onChange={() => toggleFolderSelection(index)}
                     className="accent-[#3f8cff]"
                   />
-                  <div className="h-3 w-4 rounded-[3px] bg-gradient-to-br from-[#f6c453] to-[#f29f3f]" />
-                  <span className="flex-1 truncate">{folder.path}</span>
-                  <span className="text-[11px] text-[#8f8f8f]">
-                    {typeof folder.fileCount === 'number'
-                      ? `${folder.fileCount} files`
-                      : ''}
+                  <div className="h-4 w-5 rounded-[4px] bg-gradient-to-br from-[#f6c453] to-[#f29f3f]" />
+                  <span className="flex-1 truncate text-[#dbe3ff]">{folder.path}</span>
+                  <span className="text-[11px] text-[#7f8aab]">
+                    {typeof folder.fileCount === 'number' ? `${folder.fileCount} files` : ''}
                   </span>
                 </div>
               ))
@@ -382,117 +385,126 @@ export default function App() {
           </div>
 
           <div className="mt-4 flex flex-col gap-3 text-[11px] sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2 text-[#8f8f8f]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#3f8cff]" />
+            <div className="flex items-center gap-2 text-[#8f9ebb]">
+              <span className="h-2 w-2 rounded-full bg-[#3f8cff]" />
               <span>{footerText}</span>
             </div>
             <div className="flex gap-2">
-              <button
-                className="rounded-full border border-[#3a3a3a] px-4 py-1 text-xs text-white"
-                onClick={handleCancel}
-              >
-                Cancel
+              <button className="rounded-full border border-[#2b3549] px-4 py-2 text-xs text-white" onClick={handleCancel}>
+                Reset
               </button>
               <button
-                className="rounded-full bg-[#3f8cff] px-5 py-1 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-full bg-gradient-to-r from-[#3f8cff] to-[#728bff] px-6 py-2 text-xs font-semibold text-white disabled:bg-[#1f2b45] disabled:text-[#6c7899]"
                 onClick={handleConfirm}
                 disabled={selectedCount === 0 || isIndexing}
               >
-                {isIndexing ? 'Scanning…' : 'Confirm'}
+                {isIndexing ? 'Scanning…' : 'Capture snapshot'}
               </button>
             </div>
           </div>
 
           {statusInfo && (
-            <div className="mt-3 flex flex-col gap-2 rounded-xl border border-[#262626] bg-[#151515] px-4 py-3 text-[11px] sm:flex-row sm:items-center sm:justify-between">
+            <div className="mt-4 flex flex-col gap-2 rounded-2xl border border-[#1a2131] bg-[#0b111c] px-4 py-3 text-[12px] text-[#c7d7ff] sm:flex-row sm:items-center sm:justify-between">
               <span>{statusInfo.left}</span>
-              <span className="text-[#c8d4ff]">{statusInfo.right}</span>
+              <span className="text-[#8fb9ff]">{statusInfo.right}</span>
             </div>
           )}
         </section>
 
-        {/* Organization Section */}
         {snapshotTree && strategies.length > 0 && (
-          <section className="mt-6 rounded-xl border border-[#2a2a2a] bg-[#181818] p-4">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-sm font-medium">Organize Files</h3>
+          <section className="mt-8 rounded-2xl border border-[#1e2536] bg-[#0f1420] p-5">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h3 className="text-base font-semibold text-white">Organize Preview</h3>
+                <p className="text-sm text-[#8da0c6]">Try a strategy, drag to adjust, then apply once you’re satisfied.</p>
+              </div>
               <div className="flex items-center gap-3">
                 <select
-                  className="bg-[#222] border border-[#3a3a3a] text-xs rounded-md px-2 py-1 text-white outline-none focus:border-[#3f8cff]"
+                  title="Pick how CherryDesk reshapes your folders"
+                  className="rounded-lg border border-[#274169] bg-[#10192b] px-3 py-2 text-sm text-white focus:border-[#3f8cff] focus:outline-none focus:ring-1 focus:ring-[#3f8cff]"
                   value={selectedStrategyId}
-                  onChange={(e) => setSelectedStrategyId(e.target.value)}
+                  onChange={e => setSelectedStrategyId(e.target.value)}
+                  disabled={isExecuting}
                 >
                   {strategies.map(s => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
                   ))}
                 </select>
                 <button
-                  className="rounded-full bg-[#3f8cff] px-4 py-1 text-xs font-medium text-white disabled:opacity-50"
+                  className="rounded-lg bg-gradient-to-r from-[#3f8cff] to-[#7f6bff] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white disabled:opacity-40"
                   onClick={handlePreview}
                   disabled={isPreviewing || isExecuting}
                 >
-                  {isPreviewing ? 'Thinking...' : 'Preview'}
+                  {isPreviewing ? 'Analyzing…' : 'Preview'}
                 </button>
               </div>
             </div>
 
-            <div className="text-xs text-[#888] mb-4">
+            <p className="mt-3 text-xs text-[#7c8db3]">
               {strategies.find(s => s.id === selectedStrategyId)?.description}
-            </div>
+            </p>
 
-            <div className="grid grid-cols-2 gap-4 h-96">
-              {/* Before View */}
-              <div className="border border-[#262626] rounded-lg bg-[#151515] flex flex-col">
-                <div className="p-2 border-b border-[#262626] text-xs font-medium text-[#888]">Current Structure</div>
-                <div className="flex-1 overflow-auto p-2">
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <article className="rounded-xl border border-[#1a2131] bg-[#111726] p-4">
+                <header className="mb-3 flex items-center justify-between text-xs uppercase tracking-wide text-[#6e7d9f]">
+                  <span>Current Structure</span>
+                  <span className="text-[10px] text-[#8a96b5]">Point zero snapshot</span>
+                </header>
+                <div className="space-y-3 overflow-auto rounded-lg bg-[#0b0f18] p-3 max-h-[26rem]">
                   {snapshotTree.map(res => (
-                    <div key={res.root.path} className="mb-2">
-                      <div className="text-[#666] text-[10px] px-2 py-1 font-mono">{res.root.path}</div>
+                    <div key={res.root.path}>
+                      <p className="text-[11px] text-[#5f739a] mb-1">{res.root.path}</p>
                       <FileTree node={res.root} onNodeDrop={() => { }} />
                     </div>
                   ))}
                 </div>
-              </div>
+              </article>
 
-              {/* After View */}
-              <div className="border border-[#262626] rounded-lg bg-[#151515] flex flex-col">
-                <div className="p-2 border-b border-[#262626] text-xs font-medium text-[#3f8cff] flex justify-between items-center">
-                  <span>Proposed Structure</span>
+              <article className="rounded-xl border border-[#1a2131] bg-[#111726] p-4">
+                <header className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-[#6e7d9f]">Proposed Structure</p>
+                    {pendingSummary && (
+                      <p className="text-[11px] text-[#a1b5dd]">
+                        {pendingSummary.files} items staged across {pendingSummary.roots} root(s)
+                      </p>
+                    )}
+                  </div>
                   {workingTree && (
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-2">
                       {canUndo && (
                         <button
                           onClick={handleUndo}
                           disabled={isExecuting}
-                          className="text-[10px] underline text-[#ff6b6b]"
+                          className="rounded-lg border border-[#ff7373]/40 px-3 py-1 text-xs text-[#ff9b9b] hover:bg-[#2b1313]"
                         >
-                          Undo
+                          Undo last
                         </button>
                       )}
                       <button
                         onClick={handleApply}
                         disabled={isExecuting}
-                        className="bg-[#3f8cff] text-white px-2 py-0.5 rounded text-[10px]"
+                        className="rounded-lg bg-[#32c59e] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[#0a1f16] disabled:bg-[#2b4b40]"
                       >
-                        Apply
+                        {isExecuting ? 'Applying…' : 'Apply'}
                       </button>
                     </div>
                   )}
-                </div>
-                <div className="flex-1 overflow-auto p-2">
+                </header>
+                <div className="space-y-3 overflow-auto rounded-lg bg-[#0b0f18] p-3 max-h-[26rem]">
                   {workingTree ? (
                     workingTree.map(root => (
-                      <div key={root.path} className="mb-2">
-                        <FileTree node={root} onNodeDrop={handleMoveNode} />
-                      </div>
+                      <FileTree key={root.path} node={root} onNodeDrop={handleMoveNode} />
                     ))
                   ) : (
-                    <div className="h-full flex items-center justify-center text-[#444] text-xs">
-                      Click "Preview" to see the organized structure
+                    <div className="flex h-40 items-center justify-center rounded-lg border border-dashed border-[#1f2b42] text-[12px] text-[#60719b]">
+                      Preview a strategy to see the proposed layout
                     </div>
                   )}
                 </div>
-              </div>
+              </article>
             </div>
           </section>
         )}
