@@ -3,11 +3,13 @@
     "compilerOptions": {
         "module": "CommonJS",
         "outDir": "dist/main",
-        "rootDir": "src/main",
+        "rootDir": "src",
         "moduleResolution": "node",
         "target": "ES2020"
     },
     "include": [
-        "src/main"
+        "src/main",
+        "src/common",
+        "src/llm"
     ]
 }

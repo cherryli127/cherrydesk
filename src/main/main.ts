@@ -1,8 +1,14 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
+import { scanDirectory } from './scanner';
+import { getStrategy, strategies } from './strategies';
+import { FileNode } from '../common/types';
+import { calculateDiff } from './utils/diff';
+import { BatchExecutor } from './executor';
 
 let mainWindow: BrowserWindow | null = null;
+const executor = new BatchExecutor();
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -68,6 +74,40 @@ ipcMain.handle('count-files', async (_event, folders: string[]) => {
   }));
   const total = perFolder.reduce((s, f) => s + f.count, 0);
   return { perFolder, total };
+});
+
+/** 扫描目录并返回完整树结构 */
+ipcMain.handle('scan-folders', async (_event, folders: string[]) => {
+  const results = await Promise.all(
+    folders.map(folder => scanDirectory(folder))
+  );
+  return results;
+});
+
+/** 预览组织策略 */
+ipcMain.handle('preview-organization', async (_event, strategyId: string, root: FileNode) => {
+  const strategy = getStrategy(strategyId);
+  if (!strategy) throw new Error(`Strategy ${strategyId} not found`);
+  
+  return await strategy.apply(root);
+});
+
+/** 获取可用策略列表 */
+ipcMain.handle('get-strategies', async () => {
+    return strategies.map(s => ({ id: s.id, name: s.name, description: s.description }));
+});
+
+/** 执行文件移动 */
+ipcMain.handle('execute-organization', async (_event, rootPath: string, workingTreeRoot: FileNode) => {
+    const ops = calculateDiff(rootPath, workingTreeRoot);
+    if (ops.length === 0) return { success: true, processed: 0, errors: [] };
+    
+    return await executor.execute(ops);
+});
+
+/** 撤销上一次操作 */
+ipcMain.handle('undo-last-batch', async () => {
+    return await executor.undoLastBatch();
 });
 
 /** 原来的 ping 保留（可删） */
