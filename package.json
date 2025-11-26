@@ -1,20 +1,30 @@
 {
-    "name": "cherrydesk",
-    "version": "0.1.0",
-    "main": "dist/main/main.js",
-    "scripts": {
-      "build": "tsc && cp src/renderer/index.html dist/renderer/index.html",
-      "watch": "tsc -w",
-      "electron": "electron .",
-      "dev": "concurrently \"npm:watch\" \"npm:electron\"",
-      "start": "npm run build && electron .",
-      "postinstall": "node scripts/postinstall-electron.js"
-    },
-    "devDependencies": {
-      "@types/electron": "^1.6.10",
-      "@types/node": "^22.7.4",
-      "concurrently": "^9.1.0",
-      "electron": "^32.2.0",
-      "typescript": "^5.6.3"
-    }
+  "name": "cherrydesk",
+  "version": "0.1.0",
+  "main": "dist/main/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.main.json && vite build",
+    "watch:main": "tsc -p tsconfig.main.json -w",
+    "watch:renderer": "vite build --watch",
+    "electron": "electron .",
+    "dev": "npm run build && concurrently \"npm:watch:main\" \"npm:watch:renderer\" \"npm:electron\"",
+    "start": "npm run build && electron .",
+    "postinstall": "node scripts/postinstall-electron.js"
+  },
+  "devDependencies": {
+    "@types/electron": "^1.6.10",
+    "@types/node": "^22.7.4",
+    "@vitejs/plugin-react": "^5.1.1",
+    "autoprefixer": "^10.4.22",
+    "concurrently": "^9.1.0",
+    "electron": "^32.2.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.16",
+    "typescript": "^5.6.3",
+    "vite": "^7.2.4"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
   }
+}
