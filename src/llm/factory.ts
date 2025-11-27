@@ -57,6 +57,6 @@ export function createLLMClient(overrides?: { apiKey?: string; baseURL?: string;
     apiKey,
     baseURL,
     defaultModel,
-    timeout: 90_000,
+    // timeout: 90_000,
   });
 }

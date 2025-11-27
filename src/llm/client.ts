@@ -62,20 +62,20 @@ export interface ClientConfig {
     apiKey: string;
     baseURL?: string;
     defaultModel?: string;
-    timeout?: number;
+    // timeout?: number;
 }
 
 export class LLMClient {
     private apiKey: string;
     private baseURL: string;
     private defaultModel: string;
-    private timeout: number;
+    // private timeout: number;
 
     constructor(config: ClientConfig) {
         this.apiKey = config.apiKey;
         this.baseURL = config.baseURL || 'https://api.openai.com/v1';
         this.defaultModel = config.defaultModel || 'gpt-4';
-        this.timeout = config.timeout || 30000;
+        // this.timeout = config.timeout || 30000;
     }
 
     /**
@@ -106,7 +106,7 @@ export class LLMClient {
         });
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+        // const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
         try {
             const response = await fetch(url, {
@@ -116,7 +116,7 @@ export class LLMClient {
                 signal: controller.signal,
             });
 
-            clearTimeout(timeoutId);
+            // clearTimeout(timeoutId);
 
             if (!response.ok) {
                 const errorBody = await response.text();
@@ -127,7 +127,7 @@ export class LLMClient {
 
             return await response.json();
         } catch (error) {
-            clearTimeout(timeoutId);
+            // clearTimeout(timeoutId);
             // Enhanced error logging
             console.error(`LLM Request Failed to ${url}:`, error);
             console.error('Full request details:', {
@@ -139,7 +139,7 @@ export class LLMClient {
 
             if (error instanceof Error) {
                 if (error.name === 'AbortError') {
-                    throw new Error(`Request timeout after ${this.timeout}ms`);
+                    // throw new Error(`Request timeout after ${this.timeout}ms`);
                 }
                 // Propagate the original error to preserve stack trace and type
                 throw error;
