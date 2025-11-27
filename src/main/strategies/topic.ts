@@ -1,39 +1,28 @@
 import { OrganizationStrategy } from '../../common/strategy';
 import { FileNode } from '../../common/types';
-import { flattenFiles, createDirectory, cloneNode } from './utils';
-import { LLMClient, ChatMessage } from '../../llm/client';
-
-// We'll need a way to instantiate the client. 
-// For now, we'll assume environment variables or a config are present, 
-// or we will accept the client as a dependency if we were doing dependency injection.
-// Since this is a strategy object, we might need to initialize it lazily or pass config.
-
-// Mock config for now - in a real app this comes from user settings
-const MOCK_CONFIG = {
-    apiKey: process.env.OPENAI_API_KEY || 'sk-mock-key',
-    baseURL: process.env.OPENAI_BASE_URL || 'http://localhost:11434/v1', // Default to local Ollama
-    defaultModel: 'llama3'
-};
+import { flattenFiles, createDirectory, cloneTree, safeParseJSON } from '../utils/treeHelpers';
+import { ChatMessage } from '../../llm/client';
+import { createLLMClient } from '../../llm/factory';
 
 export class TopicStrategy implements OrganizationStrategy {
     id = 'topic';
     name = 'Organize by Topic (AI)';
     description = 'Uses AI to group files into semantic topics based on filenames.';
 
-    private client: LLMClient;
-
     constructor() {
-        this.client = new LLMClient(MOCK_CONFIG);
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/ee30be1f-d633-4821-9229-dd3193d5e69c', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'src/main/strategies/topic.ts:constructor', message: 'Initializing TopicStrategy', timestamp: Date.now(), sessionId: 'debug-session', runId: '1', hypothesisId: 'A' }) }).catch(() => { });
+        // #endregion
     }
 
     async apply(root: FileNode): Promise<FileNode> {
+        const client = createLLMClient();
+        if (!client) {
+            throw new Error('AI organization requires KIMI_API_KEY or OPENAI_API_KEY environment variables.');
+        }
+
         const files = flattenFiles(root);
         const filenames = files.map(f => f.name);
-
-        // Limit for safety in this demo
-        if (filenames.length > 200) {
-            throw new Error("Too many files for AI processing in this demo version (limit 200).");
-        }
 
         const prompt = `
 You are an intelligent file organizer. 
@@ -50,25 +39,19 @@ ${JSON.stringify(filenames)}
             { role: 'user', content: prompt }
         ];
 
+        console.log(messages);
+
         try {
-            const response = await this.client.chat(messages, {
+            const response = await client.chat(messages, {
                 temperature: 0.1,
-                response_format: { type: "json_object" } // if supported by provider
-            } as any); // Cast to any because response_format might not be in the strict interface yet
+                response_format: { type: "json_object" } as any // Cast if type def is strict
+            });
 
             const content = response.choices[0].message.content;
             if (!content) throw new Error("No response from AI");
 
-            // Parse JSON
-            let mapping: Record<string, string[]>;
-            try {
-                // naive cleanup in case of markdown blocks
-                const cleanJson = content.replace(/```json/g, '').replace(/```/g, '').trim();
-                mapping = JSON.parse(cleanJson);
-            } catch (e) {
-                console.error("Failed to parse AI JSON:", content);
-                throw new Error("AI response was not valid JSON.");
-            }
+            const mapping = safeParseJSON<Record<string, string[]>>(content);
+            if (!mapping) throw new Error("AI response was not valid JSON.");
 
             // Reconstruct Tree
             const newChildren: FileNode[] = [];
@@ -80,7 +63,7 @@ ${JSON.stringify(filenames)}
                 for (const name of topicFiles) {
                     const node = fileMap.get(name);
                     if (node) {
-                        nodes.push(cloneNode(node));
+                        nodes.push(cloneTree(node));
                         handledFiles.add(name);
                     }
                 }
@@ -92,11 +75,11 @@ ${JSON.stringify(filenames)}
             // Handle leftovers
             const leftovers = files.filter(f => !handledFiles.has(f.name));
             if (leftovers.length > 0) {
-                newChildren.push(createDirectory('Uncategorized', leftovers.map(cloneNode)));
+                newChildren.push(createDirectory('Uncategorized', leftovers.map(n => cloneTree(n))));
             }
 
             return {
-                ...cloneNode(root),
+                ...cloneTree(root),
                 children: newChildren
             };
 
@@ -106,4 +89,3 @@ ${JSON.stringify(filenames)}
         }
     }
 }
-

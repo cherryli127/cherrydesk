@@ -1,7 +1,7 @@
 {
   "name": "cherrydesk",
   "version": "0.1.0",
-  "main": "dist/main/main.js",
+  "main": "dist/main/main/main.js",
   "scripts": {
     "build": "tsc -p tsconfig.main.json && vite build",
     "watch:main": "tsc -p tsconfig.main.json -w",
@@ -13,9 +13,9 @@
   },
   "devDependencies": {
     "@types/electron": "^1.6.10",
+    "@types/node": "^22.7.4",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@types/node": "^22.7.4",
     "@vitejs/plugin-react": "^5.1.1",
     "autoprefixer": "^10.4.22",
     "concurrently": "^9.1.0",
@@ -26,6 +26,8 @@
     "vite": "^7.2.4"
   },
   "dependencies": {
+    "@llamaindex/chat-ui": "^0.6.1",
+    "@swc/helpers": "^0.5.17",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   }

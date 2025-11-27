@@ -1,10 +1,11 @@
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 import { ScanResult, FileNode } from '../common/types';
+import { ModelProviderConfig } from '../common/modelProvider';
 
 interface ExecutionResult {
-    success: boolean;
-    processed: number;
-    errors: string[];
+  success: boolean;
+  processed: number;
+  errors: string[];
 }
 
 contextBridge.exposeInMainWorld('api', {
@@ -14,7 +15,7 @@ contextBridge.exposeInMainWorld('api', {
   countFiles: (folders: string[]) =>
     ipcRenderer.invoke('count-files', folders),
   /** 扫描目录结构 */
-  scanFolders: (folders: string[]): Promise<ScanResult[]> => 
+  scanFolders: (folders: string[]): Promise<ScanResult[]> =>
     ipcRenderer.invoke('scan-folders', folders),
   /** 预览组织结果 */
   previewOrganization: (strategyId: string, root: FileNode): Promise<FileNode> =>
@@ -26,6 +27,23 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('execute-organization', rootPath, workingTreeRoot),
   /** 撤销 */
   undoLastBatch: (): Promise<ExecutionResult> => ipcRenderer.invoke('undo-last-batch'),
+  /** 获取模型提供商配置 */
+  getModelProviderConfig: (): Promise<ModelProviderConfig | null> =>
+    ipcRenderer.invoke('get-model-provider-config'),
+  /** 保存模型提供商配置 */
+  saveModelProviderConfig: (config: ModelProviderConfig): Promise<void> =>
+    ipcRenderer.invoke('save-model-provider-config', config),
+  /** 测试模型提供商连接 */
+  testModelProviderConfig: (config: ModelProviderConfig): Promise<{ success: boolean; message: string }> =>
+    ipcRenderer.invoke('test-model-provider-config', config),
+  /** 监听模型提供商配置变化 */
+  onModelProviderConfigUpdated: (callback: (config: ModelProviderConfig) => void) => {
+    const listener = (_event: IpcRendererEvent, updatedConfig: ModelProviderConfig) => callback(updatedConfig);
+    ipcRenderer.on('model-provider-config-updated', listener);
+    return () => {
+      ipcRenderer.removeListener('model-provider-config-updated', listener);
+    };
+  },
   /** 原来的 ping */
   ping: (message: string) => ipcRenderer.invoke('ping', message)
 });

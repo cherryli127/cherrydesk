@@ -1,6 +1,6 @@
 import { OrganizationStrategy } from '../../common/strategy';
 import { FileNode } from '../../common/types';
-import { flattenFiles, createDirectory, cloneNode } from './utils';
+import { flattenFiles, createDirectory, cloneTree } from '../utils/treeHelpers';
 import * as path from 'path';
 
 const TYPE_MAPPING: Record<string, string[]> = {
@@ -32,7 +32,7 @@ export const TypeStrategy: OrganizationStrategy = {
         for (const file of files) {
             const category = getCategory(file.name);
             if (!groups[category]) groups[category] = [];
-            groups[category].push(cloneNode(file));
+            groups[category].push(cloneTree(file));
         }
 
         const newChildren: FileNode[] = [];
@@ -56,9 +56,8 @@ export const TypeStrategy: OrganizationStrategy = {
         }
 
         return {
-            ...cloneNode(root),
+            ...cloneTree(root),
             children: newChildren
         };
     }
 };
-

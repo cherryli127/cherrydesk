@@ -1,6 +1,6 @@
 import { OrganizationStrategy } from '../../common/strategy';
 import { FileNode } from '../../common/types';
-import { flattenFiles, createDirectory, cloneNode } from './utils';
+import { flattenFiles, createDirectory, cloneTree } from '../utils/treeHelpers';
 
 export const TimeStrategy: OrganizationStrategy = {
     id: 'time',
@@ -19,7 +19,7 @@ export const TimeStrategy: OrganizationStrategy = {
             if (!groups[year]) groups[year] = {};
             if (!groups[year][month]) groups[year][month] = [];
 
-            groups[year][month].push(cloneNode(file));
+            groups[year][month].push(cloneTree(file));
         }
 
         const newChildren: FileNode[] = [];
@@ -37,9 +37,8 @@ export const TimeStrategy: OrganizationStrategy = {
         }
 
         return {
-            ...cloneNode(root),
+            ...cloneTree(root),
             children: newChildren
         };
     }
 };
-

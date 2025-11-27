@@ -38,6 +38,7 @@ export interface ChatCompletionRequest {
     tool_choice?: 'auto' | 'none' | { type: 'function'; function: { name: string } };
     temperature?: number;
     max_tokens?: number;
+    response_format?: { type: 'text' | 'json_object' };
 }
 
 export interface ChatCompletionResponse {
@@ -87,6 +88,23 @@ export class LLMClient {
             'Authorization': `Bearer ${this.apiKey}`,
         };
 
+        const previewMessages = request.messages.map((message, index) => ({
+            index,
+            role: message.role,
+            preview: typeof message.content === 'string'
+                ? message.content.slice(0, 200)
+                : message.content,
+        }));
+        console.log('[LLMClient] Sending chat request:', {
+            url,
+            model: request.model,
+            temperature: request.temperature,
+            max_tokens: request.max_tokens,
+            messageCount: request.messages.length,
+            messages: previewMessages,
+            hasTools: !!request.tools?.length,
+        });
+
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
@@ -103,17 +121,27 @@ export class LLMClient {
             if (!response.ok) {
                 const errorBody = await response.text();
                 throw new Error(
-                    `LLM API error (${response.status}): ${errorBody || response.statusText}`
+                    `LLM API error (${response.status}) from ${url}: ${errorBody || response.statusText}`
                 );
             }
 
             return await response.json();
         } catch (error) {
             clearTimeout(timeoutId);
+            // Enhanced error logging
+            console.error(`LLM Request Failed to ${url}:`, error);
+            console.error('Full request details:', {
+                url,
+                method: 'POST',
+                headers,
+                body: JSON.stringify(request),
+            });
+
             if (error instanceof Error) {
                 if (error.name === 'AbortError') {
                     throw new Error(`Request timeout after ${this.timeout}ms`);
                 }
+                // Propagate the original error to preserve stack trace and type
                 throw error;
             }
             throw new Error(`Unexpected error: ${String(error)}`);
@@ -129,6 +157,7 @@ export class LLMClient {
             model?: string;
             temperature?: number;
             max_tokens?: number;
+            response_format?: { type: 'text' | 'json_object' };
         }
     ): Promise<ChatCompletionResponse> {
         return this.chatCompletion({
@@ -136,6 +165,7 @@ export class LLMClient {
             messages,
             temperature: options?.temperature,
             max_tokens: options?.max_tokens,
+            response_format: options?.response_format,
         });
     }
 
@@ -162,4 +192,3 @@ export class LLMClient {
         });
     }
 }
-

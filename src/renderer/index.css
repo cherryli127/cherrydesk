@@ -1,3 +1,7 @@
+@import '@llamaindex/chat-ui/styles/markdown.css';
+@import '@llamaindex/chat-ui/styles/editor.css';
+@import '@llamaindex/chat-ui/styles/pdf.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
